@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 33
-    namespace "tv.cjump.ndkbitmap_x86"
+    namespace "tv.cjump.ndkbitmap_arm64_v8a"
 
     defaultConfig {
         minSdkVersion 21
