@@ -709,6 +709,15 @@ public class DanmakuContext implements Cloneable {
         return this;
     }
 
+    private int mUpdateRate = 16;
+    public int getFrameUpdateRate(){
+        return mUpdateRate;
+    }
+
+    public void setFrameUpateRate(int rate){
+        mUpdateRate = rate;
+    }
+
     @Override
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
