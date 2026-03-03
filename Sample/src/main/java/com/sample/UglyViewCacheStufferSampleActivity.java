@@ -20,6 +20,7 @@ import android.text.style.BackgroundColorSpan;
 import android.text.style.ImageSpan;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.Display;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
@@ -310,9 +311,15 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
         mDanmakuView = (IDanmakuView) findViewById(R.id.sv_danmaku);
         mContext = DanmakuContext.create();
 
+        // 适配120Hz刷新
+        Display display = getWindowManager().getDefaultDisplay();
+        float refreshRate = display.getRefreshRate();
+        int rate = (int) (1000 / refreshRate);
+        mContext.setFrameUpateRate(rate);
+
         mIconWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 30f, getResources().getDisplayMetrics());
         mContext.setDanmakuBold(true);
-        mContext.setDanmakuStyle(IDisplayer.DANMAKU_STYLE_STROKEN, 3).setDuplicateMergingEnabled(false).setScrollSpeedFactor(1.2f).setScaleTextSize(1.2f)
+        mContext.setDanmakuStyle(IDisplayer.DANMAKU_STYLE_STROKEN, 3).setDuplicateMergingEnabled(false).setScrollSpeedFactor(2.2f).setScaleTextSize(1.2f)
                 .setCacheStuffer(new ViewCacheStuffer<MyViewHolder>() {
 
                     @Override
@@ -381,7 +388,7 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
                 .setMaximumLines(maxLinesPair)
                 .preventOverlapping(overlappingEnablePair);
         if (mDanmakuView != null) {
-            mParser = createParser(this.getResources().openRawResource(R.raw.comments));
+            mParser = createParser(null);
             mDanmakuView.setCallback(new master.flame.danmaku.controller.DrawHandler.Callback() {
                 @Override
                 public void updateTimer(DanmakuTimer timer) {
@@ -570,7 +577,7 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
         danmaku.padding = 5;
         danmaku.priority = 1;  // 一定会显示, 一般用于本机发送的弹幕
         danmaku.isLive = islive;
-        danmaku.setTime(mDanmakuView.getCurrentTime() + 1200);
+        danmaku.setTime(mDanmakuView.getCurrentTime() + 4000);
         danmaku.textSize = 25f * (mParser.getDisplayer().getDensity() - 0.6f);
         danmaku.textColor = Color.RED;
         danmaku.textShadowColor = 0; // 重要：如果有图文混排，最好不要设置描边(设textShadowColor=0)，否则会进行两次复杂的绘制导致运行效率降低

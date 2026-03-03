@@ -42,9 +42,5 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 }
-if (rootProject.file('gradle/gradle-mvn-push.gradle').exists()) {
-    apply from: rootProject.file('gradle/gradle-mvn-push.gradle')
-}
-if (rootProject.file('gradle/gradle-bintray-upload.gradle').exists()) {
-    apply from: rootProject.file('gradle/gradle-bintray-upload.gradle')
-}
+// JitPack publishing
+apply from: rootProject.file('gradle/jitpack-publish.gradle')
