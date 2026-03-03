@@ -1,7 +1,9 @@
 DanmakuFlameMaster
 ==================
 
-android上开源弹幕解析绘制引擎项目。[![Build Status](https://travis-ci.org/Bilibili/DanmakuFlameMaster.png?branch=master)](https://travis-ci.org/Bilibili/DanmakuFlameMaster)
+android上开源弹幕解析绘制引擎项目。
+
+[![](https://jitpack.io/v/UserName-Haha/DanmakuFlameMaster.svg)](https://jitpack.io/#UserName-Haha/DanmakuFlameMaster)
 
 ### DFM Inside: 
 [![bili](https://raw.github.com/ctiao/ctiao.github.io/master/images/apps/bili.png?raw=true)](https://play.google.com/store/apps/details?id=tv.danmaku.bili)
@@ -39,38 +41,28 @@ android上开源弹幕解析绘制引擎项目。[![Build Status](https://travis
 
 
 ### Download
-Download the [latest version][1] or grab via Maven:
 
-```xml
-<dependency>
-  <groupId>com.github.ctiao</groupId>
-  <artifactId>dfm</artifactId>
-  <version>0.9.25</version>
-</dependency>
-```
+**Step 1.** Add JitPack repository to your build file
 
-or Gradle:
 ```groovy
+// settings.gradle 或 root build.gradle
 repositories {
-    jcenter()
-}
-
-dependencies {
-    compile 'com.github.ctiao:DanmakuFlameMaster:0.9.25'
-    compile 'com.github.ctiao:ndkbitmap-armv7a:0.9.21'
-
-    # Other ABIs: optional
-    compile 'com.github.ctiao:ndkbitmap-armv5:0.9.21'
-    compile 'com.github.ctiao:ndkbitmap-x86:0.9.21'
+    maven { url 'https://jitpack.io' }
 }
 ```
-Snapshots of the development version are available in [Sonatype's snapshots repository][2].
 
+**Step 2.** Add the dependency
+
+```groovy
+dependencies {
+    implementation 'com.github.UserName-Haha.DanmakuFlameMaster:DanmakuFlameMaster:v1.0.0'
+
+    // 选择对应的 ABI
+    implementation 'com.github.UserName-Haha.DanmakuFlameMaster:ndkbitmap-arm64-v8a:v1.0.0'
+    implementation 'com.github.UserName-Haha.DanmakuFlameMaster:ndkbitmap-armv7a:v1.0.0'
+}
+```
 
 ### License
     Copyright (C) 2013-2015 Chen Hui <calmer91@gmail.com>
     Licensed under the Apache License, Version 2.0 (the "License");
-
-
-[1]:https://oss.sonatype.org/#nexus-search;gav~com.github.ctiao~dfm~~~
-[2]:https://oss.sonatype.org/content/repositories/snapshots/
