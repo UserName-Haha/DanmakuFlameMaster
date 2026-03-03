@@ -1,0 +1,42 @@
+apply plugin: 'maven-publish'
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+
+                groupId = findProperty('GROUP') ?: 'com.github.haha'
+                artifactId = project.name
+                version = findProperty('VERSION_NAME') ?: '1.0.0'
+
+                pom {
+                    name = project.name
+                    description = 'DanmakuFlameMaster - A Danmaku render library for Android'
+                    url = 'https://github.com/UserName-Haha/DanmakuFlameMaster'
+
+                    licenses {
+                        license {
+                            name = 'The Apache Software License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id = 'UserName-Haha'
+                            name = 'UserName-Haha'
+                            email = ''
+                        }
+                    }
+
+                    scm {
+                        connection = 'scm:git:git://github.com/UserName-Haha/DanmakuFlameMaster.git'
+                        developerConnection = 'scm:git:ssh://git@github.com/UserName-Haha/DanmakuFlameMaster.git'
+                        url = 'https://github.com/UserName-Haha/DanmakuFlameMaster'
+                    }
+                }
+            }
+        }
+    }
+}
