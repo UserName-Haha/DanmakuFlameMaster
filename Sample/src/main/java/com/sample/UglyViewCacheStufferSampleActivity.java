@@ -307,7 +307,6 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
         HashMap<Integer, Boolean> overlappingEnablePair = new HashMap<Integer, Boolean>();
         overlappingEnablePair.put(BaseDanmaku.TYPE_SCROLL_RL, true);
         overlappingEnablePair.put(BaseDanmaku.TYPE_FIX_TOP, true);
-
         mDanmakuView = (IDanmakuView) findViewById(R.id.sv_danmaku);
         mContext = DanmakuContext.create();
 
@@ -319,7 +318,7 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
 
         mIconWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 30f, getResources().getDisplayMetrics());
         mContext.setDanmakuBold(true);
-        mContext.setDanmakuStyle(IDisplayer.DANMAKU_STYLE_STROKEN, 3).setDuplicateMergingEnabled(false).setScrollSpeedFactor(2.2f).setScaleTextSize(1.2f)
+        mContext.setDanmakuStyle(IDisplayer.DANMAKU_STYLE_STROKEN, 3).setDuplicateMergingEnabled(false).setScrollSpeedFactor(1.8f).setScaleTextSize(1.2f)
                 .setCacheStuffer(new ViewCacheStuffer<MyViewHolder>() {
 
                     @Override
@@ -329,28 +328,58 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
                     }
 
                     @Override
-                    public void onBindViewHolder(int viewType, MyViewHolder viewHolder, BaseDanmaku danmaku, AndroidDisplayer.DisplayerConfig displayerConfig, TextPaint paint) {
+                    public void onBindViewHolder(int viewType, MyViewHolder viewHolder, BaseDanmaku danmaku,
+                                                 AnimationInfo animationInfo,
+                                                 AndroidDisplayer.DisplayerConfig displayerConfig, TextPaint paint) {
+                        Log.d("Hhahahah","onBindViewHolder------->");
                         if (paint != null)
                             viewHolder.mText.getPaint().set(paint);
                         viewHolder.mText.setText(danmaku.text);
                         viewHolder.mText.setTextColor(danmaku.textColor);
                         viewHolder.mText.setTextSize(TypedValue.COMPLEX_UNIT_PX, danmaku.textSize);
-                        Bitmap bitmap = null;
-                        MyImageWare imageWare = (MyImageWare) danmaku.tag;
-                        if (imageWare != null) {
-                            bitmap = imageWare.bitmap;
-                            if (danmaku.text.toString().contains("textview")) {
-                                Log.e("DFM", "onBindViewHolder======> bitmap:" + (bitmap == null) + "  " + danmaku.tag + "url:" + imageWare.getImageUri());
+
+                        // 子View动画示例（仅当 needDisableCache 返回 true 时生效）
+                        // 动画参数：halfDuration=800ms，总时长=1600ms
+                        final long HALF_DURATION = 800;
+                        final long TOTAL_DURATION = HALF_DURATION * 2;
+
+                        if (animationInfo != null) {
+                            // 点赞动画：单次往返（放大再缩小，然后停止）
+                            float iconScale = animationInfo.animateBounce(0, HALF_DURATION, 1.0f, 3.0f);
+                            viewHolder.mIcon.setScaleX(iconScale);
+                            viewHolder.mIcon.setScaleY(iconScale);
+
+                            // 重要：动画结束后重置子View状态，避免复用时出现问题
+                            if (animationInfo.isAnimationFinished(0, TOTAL_DURATION)) {
+                                viewHolder.mIcon.setScaleX(1.0f);
+                                viewHolder.mIcon.setScaleY(1.0f);
                             }
                         }
-                        if (bitmap != null) {
-                            viewHolder.mIcon.setImageBitmap(bitmap);
-                            if (danmaku.text.toString().contains("textview")) {
-                                Log.e("DFM", "onBindViewHolder======>" + danmaku.tag + "url:" + imageWare.getImageUri());
-                            }
-                        } else {
-                            viewHolder.mIcon.setImageResource(R.drawable.ic_launcher);
-                        }
+                    }
+
+                    /**
+                     * 判断是否需要禁用缓存以支持子View动画
+                     * 返回true: 每帧重新绘制，支持子View动画
+                     * 返回false: 使用缓存，动画停止
+                     */
+                    @Override
+                    public boolean needDisableCache(BaseDanmaku danmaku, AnimationInfo animationInfo) {
+                        // 动画时长：800ms * 2 = 1600ms（与 animateBounce 的参数对应）
+                        // 动画进行中返回true，动画结束后返回false（恢复使用缓存）
+                        final long TOTAL_DURATION = 800 * 2;
+                        return !animationInfo.isAnimationFinished(0, TOTAL_DURATION);
+                    }
+
+                    /**
+                     * 整体动画 - 每帧都会调用（包括使用缓存时）
+                     * 适用于对整个弹幕做缩放、旋转、透明等变换
+                     */
+                    @Override
+                    public void onTransformDanmaku(AnimationInfo animationInfo, BaseDanmaku danmaku, AnimationTransform transform) {
+                        // 示例：入场动画 - 前500ms从0.5缩放到1.0
+//                        float scale = animationInfo.animate(0, 4500, 0.5f, 3.0f);
+//                        transform.scaleX = scale;
+//                        transform.scaleY = scale;
                     }
 
                     @Override
@@ -417,6 +446,8 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
                     BaseDanmaku latest = danmakus.last();
                     if (null != latest) {
                         Log.d("DFM", "onDanmakuClick: text of latest danmaku:" + latest.text);
+                        latest.text = "点击了";
+                        mDanmakuView.invalidateDanmaku(latest, false);
                         return true;
                     }
                     return false;
@@ -551,20 +582,16 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
         if (danmaku == null || mDanmakuView == null) {
             return;
         }
-        // for(int i=0;i<100;i++){
-        // }
         danmaku.text = "这是一条弹幕" + System.nanoTime();
         danmaku.padding = 5;
-        danmaku.priority = 0;  // 可能会被各种过滤器过滤并隐藏显示
+        danmaku.priority = 0;
         danmaku.isLive = islive;
         danmaku.setTime(mDanmakuView.getCurrentTime() + 1200);
         danmaku.textSize = 25f * (mParser.getDisplayer().getDensity() - 0.6f);
         danmaku.textColor = Color.RED;
         danmaku.textShadowColor = Color.WHITE;
-        // danmaku.underlineColor = Color.GREEN;
         danmaku.borderColor = Color.GREEN;
         mDanmakuView.addDanmaku(danmaku);
-
     }
 
     private void addDanmaKuShowTextAndImage(boolean islive) {

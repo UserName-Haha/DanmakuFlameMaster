@@ -24,6 +24,7 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.PopupWindow;
+import android.widget.Toast;
 import android.widget.VideoView;
 
 import java.io.IOException;
@@ -253,6 +254,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     Log.d("DFM", "onDanmakuClick: danmakus size:" + danmakus.size());
                     BaseDanmaku latest = danmakus.last();
                     if (null != latest) {
+                        Toast.makeText(MainActivity.this, "点击了弹幕", Toast.LENGTH_SHORT).show();
                         Log.d("DFM", "onDanmakuClick: text of latest danmaku:" + latest.text);
                         return true;
                     }
