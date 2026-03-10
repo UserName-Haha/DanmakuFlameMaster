@@ -383,10 +383,22 @@ public abstract class ViewCacheStuffer<VH extends ViewCacheStuffer.ViewHolder> e
         VH viewHolder = viewHolders.get(0);
         // measure 阶段不需要动画信息
         onBindViewHolder(viewType, viewHolder, danmaku, null, null, paint);
-        viewHolder.measure(View.MeasureSpec.makeMeasureSpec(mMaximumWidthPixels, View.MeasureSpec.AT_MOST), View.MeasureSpec.makeMeasureSpec(mMaximumHeightPixels, View.MeasureSpec.AT_MOST));
-        viewHolder.layout(0, 0, viewHolder.getMeasureWidth(), viewHolder.getMeasureHeight());
-        danmaku.paintWidth = viewHolder.getMeasureWidth();
-        danmaku.paintHeight = viewHolder.getMeasureHeight();
+        // 使用 UNSPECIFIED 模式，让 View 自行决定尺寸
+        int widthSpec = mMaximumWidthPixels > 0
+                ? View.MeasureSpec.makeMeasureSpec(mMaximumWidthPixels, View.MeasureSpec.AT_MOST)
+                : View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+        int heightSpec = mMaximumHeightPixels > 0
+                ? View.MeasureSpec.makeMeasureSpec(mMaximumHeightPixels, View.MeasureSpec.AT_MOST)
+                : View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+        viewHolder.measure(widthSpec, heightSpec);
+        int measuredWidth = viewHolder.getMeasureWidth();
+        int measuredHeight = viewHolder.getMeasureHeight();
+        // 只有在测量结果有效时才调用 layout
+        if (measuredWidth > 0 && measuredHeight > 0) {
+            viewHolder.layout(0, 0, measuredWidth, measuredHeight);
+        }
+        danmaku.paintWidth = measuredWidth;
+        danmaku.paintHeight = measuredHeight;
     }
 
     @Override
@@ -555,8 +567,12 @@ public abstract class ViewCacheStuffer<VH extends ViewCacheStuffer.ViewHolder> e
                     borderPaint);
         }
         //draw danmaku
-        viewHolder.layout(0, 0, (int) danmaku.paintWidth, (int) danmaku.paintHeight);
-        viewHolder.draw(canvas, displayerConfig); //FIXME: handle canvas.getMaximumBitmapWidth()
+        int layoutWidth = (int) danmaku.paintWidth;
+        int layoutHeight = (int) danmaku.paintHeight;
+        if (layoutWidth > 0 && layoutHeight > 0) {
+            viewHolder.layout(0, 0, layoutWidth, layoutHeight);
+            viewHolder.draw(canvas, displayerConfig); //FIXME: handle canvas.getMaximumBitmapWidth()
+        }
         //TODO: stroke handle displayerConfig
         if (needRestore) {
             canvas.restore();
