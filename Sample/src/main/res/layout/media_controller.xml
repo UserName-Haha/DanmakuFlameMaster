@@ -72,6 +72,13 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:text="@string/send_danmakus" />
+
+        <Button
+            android:id="@+id/btn_reduce_alpha"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="@string/reduce_alpha" />
     </LinearLayout>
 
 </FrameLayout>

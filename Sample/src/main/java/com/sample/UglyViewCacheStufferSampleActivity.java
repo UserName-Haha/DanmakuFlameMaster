@@ -90,6 +90,10 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
     private Button mBtnSendDanmakuTextAndImage;
 
     private Button mBtnSendDanmakus;
+
+    private Button mChangeAlpha;
+
+
     private DanmakuContext mContext;
     private BaseCacheStuffer.Proxy mCacheStufferAdapter = new BaseCacheStuffer.Proxy() {
 
@@ -125,7 +129,7 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
                             SpannableStringBuilder spannable = createSpannable(drawable);
                             danmaku.text = spannable;
                             if (mDanmakuView != null) {
-                                mDanmakuView.invalidateDanmaku(danmaku, false);
+                                mDanmakuView.invalidateDanmaku(danmaku, true);
                             }
                             return;
                         }
@@ -286,6 +290,8 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
         mBtnSendDanmaku = (Button) findViewById(R.id.btn_send);
         mBtnSendDanmakuTextAndImage = (Button) findViewById(R.id.btn_send_image_text);
         mBtnSendDanmakus = (Button) findViewById(R.id.btn_send_danmakus);
+        mChangeAlpha = findViewById(R.id.btn_reduce_alpha);
+
         mBtnRotate.setOnClickListener(this);
         mBtnHideDanmaku.setOnClickListener(this);
         mMediaController.setOnClickListener(this);
@@ -295,6 +301,8 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
         mBtnSendDanmaku.setOnClickListener(this);
         mBtnSendDanmakuTextAndImage.setOnClickListener(this);
         mBtnSendDanmakus.setOnClickListener(this);
+        mChangeAlpha.setOnClickListener(this);
+
 
         // VideoView
         VideoView mVideoView = (VideoView) findViewById(R.id.videoview);
@@ -318,8 +326,13 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
 
         mIconWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 30f, getResources().getDisplayMetrics());
         mContext.setDanmakuBold(true);
-        mContext.setDanmakuStyle(IDisplayer.DANMAKU_STYLE_STROKEN, 3).setDuplicateMergingEnabled(false).setScrollSpeedFactor(1.8f).setScaleTextSize(1.2f)
+        mContext.setDanmakuStyle(IDisplayer.DANMAKU_STYLE_STROKEN, 3).setDuplicateMergingEnabled(false).setScrollSpeedFactor(4.8f).setScaleTextSize(1.2f)
                 .setCacheStuffer(new ViewCacheStuffer<MyViewHolder>() {
+
+                    // 子View动画示例（仅当 needDisableCache 返回 true 时生效）
+                    // 动画参数：halfDuration=800ms，总时长=1600ms
+                    final long HALF_DURATION = 800;
+                    final long TOTAL_DURATION = HALF_DURATION * 2;
 
                     @Override
                     public MyViewHolder onCreateViewHolder(int viewType) {
@@ -338,19 +351,14 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
                         viewHolder.mText.setTextColor(danmaku.textColor);
                         viewHolder.mText.setTextSize(TypedValue.COMPLEX_UNIT_PX, danmaku.textSize);
 
-                        // 子View动画示例（仅当 needDisableCache 返回 true 时生效）
-                        // 动画参数：halfDuration=800ms，总时长=1600ms
-                        final long HALF_DURATION = 800;
-                        final long TOTAL_DURATION = HALF_DURATION * 2;
-
-                        if (animationInfo != null) {
-                            // 点赞动画：单次往返（放大再缩小，然后停止）
-                            float iconScale = animationInfo.animateBounce(0, HALF_DURATION, 1.0f, 3.0f);
+                        if (danmaku.priority == 8 && animationInfo != null && danmaku.tag instanceof Long) {
+                            long clickTime = (Long) danmaku.tag;
+                            // 动画起始时间 = 点击时刻的 elapsedTime
+                            float iconScale = animationInfo.animateBounce(clickTime, HALF_DURATION, 1.0f, 3.0f);
                             viewHolder.mIcon.setScaleX(iconScale);
                             viewHolder.mIcon.setScaleY(iconScale);
 
-                            // 重要：动画结束后重置子View状态，避免复用时出现问题
-                            if (animationInfo.isAnimationFinished(0, TOTAL_DURATION)) {
+                            if (animationInfo.isAnimationFinished(clickTime, TOTAL_DURATION)) {
                                 viewHolder.mIcon.setScaleX(1.0f);
                                 viewHolder.mIcon.setScaleY(1.0f);
                             }
@@ -366,8 +374,15 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
                     public boolean needDisableCache(BaseDanmaku danmaku, AnimationInfo animationInfo) {
                         // 动画时长：800ms * 2 = 1600ms（与 animateBounce 的参数对应）
                         // 动画进行中返回true，动画结束后返回false（恢复使用缓存）
-                        final long TOTAL_DURATION = 800 * 2;
-                        return !animationInfo.isAnimationFinished(0, TOTAL_DURATION);
+                        if (danmaku.priority == 8 && danmaku.tag instanceof Long) {
+                            long clickTime = (Long) danmaku.tag;
+                            boolean b = !animationInfo.isAnimationFinished(clickTime, TOTAL_DURATION);
+                            if (b){
+                                Log.d("Hahhahaaaa","禁用缓存----->");
+                            }
+                            return b;
+                        }
+                        return false;
                     }
 
                     /**
@@ -384,12 +399,12 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
 
                     @Override
                     public void releaseResource(BaseDanmaku danmaku) {
-                        MyImageWare imageWare = (MyImageWare) danmaku.tag;
-                        if (imageWare != null) {
-                            ImageLoader.getInstance().cancelDisplayTask(imageWare);
-                        }
+//                        MyImageWare imageWare = (MyImageWare) danmaku.tag;
+//                        if (imageWare != null) {
+//                            ImageLoader.getInstance().cancelDisplayTask(imageWare);
+//                        }
                         danmaku.setTag(null);
-                        Log.e("DFM", "releaseResource url:" + danmaku.text);
+//                        Log.e("DFM", "releaseResource url:" + danmaku.text);
                     }
 
 
@@ -425,7 +440,6 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
 
                 @Override
                 public void drawingFinished() {
-
                 }
 
                 @Override
@@ -447,7 +461,16 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
                     if (null != latest) {
                         Log.d("DFM", "onDanmakuClick: text of latest danmaku:" + latest.text);
                         latest.text = "点击了";
-                        mDanmakuView.invalidateDanmaku(latest, false);
+                        latest.priority = 8;
+
+                        // 记录点击时的 elapsedTime 到 tag 中
+                        DanmakuTimer timer = latest.getTimer();
+                        if (timer != null) {
+                            long clickTime = timer.currMillisecond - latest.getActualTime();
+                            latest.tag = clickTime;  // 存储点击时刻的 elapsedTime
+                        }
+
+                        mDanmakuView.invalidateDanmaku(latest, true);
                         return true;
                     }
                     return false;
@@ -559,6 +582,8 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
                 mBtnSendDanmakus.setText(R.string.send_danmakus);
                 mBtnSendDanmakus.setTag(false);
             }
+        } else  if (v == mChangeAlpha){
+            mDanmakuView.setDanmakuAlpha(100);
         }
     }
 
