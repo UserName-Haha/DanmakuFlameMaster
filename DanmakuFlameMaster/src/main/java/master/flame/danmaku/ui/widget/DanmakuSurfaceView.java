@@ -72,6 +72,8 @@ public class DanmakuSurfaceView extends SurfaceView implements IDanmakuView, IDa
 
     private boolean mDanmakuVisible = true;
 
+    private int mDanmakuAlpha = 255;
+
     protected int mDrawingThreadType = THREAD_TYPE_NORMAL_PRIORITY;
 
     public DanmakuSurfaceView(Context context) {
@@ -233,6 +235,10 @@ public class DanmakuSurfaceView extends SurfaceView implements IDanmakuView, IDa
         handler.setParser(parser);
         handler.setCallback(mCallback);
         handler.prepare();
+        // 应用预设的透明度
+        if (mDanmakuAlpha < 255) {
+            config.setDanmakuTransparency(mDanmakuAlpha / 255.0f);
+        }
     }
 
     @Override
@@ -251,6 +257,15 @@ public class DanmakuSurfaceView extends SurfaceView implements IDanmakuView, IDa
     @Override
     public void showFPS(boolean show){
         mShowFps = show;
+    }
+
+    @Override
+    public void setDanmakuAlpha(int alpha) {
+        mDanmakuAlpha = Math.max(0, Math.min(255, alpha));
+        DanmakuContext config = getConfig();
+        if (config != null) {
+            config.setDanmakuTransparency(mDanmakuAlpha / 255.0f);
+        }
     }
     private static final int MAX_RECORD_SIZE = 50;
     private static final int ONE_SECOND = 1000;

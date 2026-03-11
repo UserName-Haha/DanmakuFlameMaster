@@ -413,6 +413,13 @@ public class AndroidDisplayer extends AbsDisplayer<Canvas, Typeface> {
 
             Paint alphaPaint = null;
             boolean needRestore = false;
+            int finalAlpha = AlphaValue.MAX;
+
+            // 应用全局透明度
+            if (mDisplayConfig.isTranslucent) {
+                finalAlpha = mDisplayConfig.transparency;
+            }
+
             if (danmaku.getType() == BaseDanmaku.TYPE_SPECIAL) {
                 if (danmaku.getAlpha() == AlphaValue.TRANSPARENT) {
                     return IRenderer.NOTHING_RENDERING;
@@ -424,9 +431,15 @@ public class AndroidDisplayer extends AbsDisplayer<Canvas, Typeface> {
 
                 int alpha = danmaku.getAlpha();
                 if (alpha != AlphaValue.MAX) {
-                    alphaPaint = mDisplayConfig.ALPHA_PAINT;
-                    alphaPaint.setAlpha(danmaku.getAlpha());
+                    // 综合全局透明度和弹幕自身透明度
+                    finalAlpha = (int) (finalAlpha * (alpha / (float) AlphaValue.MAX));
                 }
+            }
+
+            // 如果需要应用透明度，设置 alphaPaint
+            if (finalAlpha != AlphaValue.MAX) {
+                alphaPaint = mDisplayConfig.ALPHA_PAINT;
+                alphaPaint.setAlpha(finalAlpha);
             }
 
             // skip drawing when danmaku is transparent

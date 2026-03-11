@@ -33,6 +33,12 @@ public interface IDanmakuView {
     public boolean isDanmakuDrawingCacheEnabled();
 
     public void showFPS(boolean show);
+
+    /**
+     * 设置弹幕整体透明度
+     * @param alpha 透明度值，范围 0-255，0为完全透明，255为完全不透明
+     */
+    public void setDanmakuAlpha(int alpha);
     
     /**
      * danmaku.isLive == true的情况下,请在非UI线程中使用此方法,避免可能卡住主线程
