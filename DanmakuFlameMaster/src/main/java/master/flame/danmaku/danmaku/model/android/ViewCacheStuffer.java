@@ -236,8 +236,25 @@ public abstract class ViewCacheStuffer<VH extends ViewCacheStuffer.ViewHolder> e
             this.itemView = itemView;
         }
 
+        protected boolean mMeasureFailed = false;
+        protected int mLastMeasuredWidth = 0;
+        protected int mLastMeasuredHeight = 0;
+
         public void measure(int widthMeasureSpec, int heightMeasureSpec) {
-            this.itemView.measure(widthMeasureSpec, heightMeasureSpec);
+            try {
+                this.itemView.measure(widthMeasureSpec, heightMeasureSpec);
+                mMeasureFailed = false;
+                mLastMeasuredWidth = this.itemView.getMeasuredWidth();
+                mLastMeasuredHeight = this.itemView.getMeasuredHeight();
+            } catch (NullPointerException e) {
+                // TextView 在非 UI 线程测量时，内部 Layout 可能为 null
+                // 这通常发生在 setText 后立即测量的情况
+                mMeasureFailed = true;
+            }
+        }
+
+        public boolean isMeasureFailed() {
+            return mMeasureFailed;
         }
 
         public int getMeasureWidth() {
@@ -391,8 +408,17 @@ public abstract class ViewCacheStuffer<VH extends ViewCacheStuffer.ViewHolder> e
                 ? View.MeasureSpec.makeMeasureSpec(mMaximumHeightPixels, View.MeasureSpec.AT_MOST)
                 : View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
         viewHolder.measure(widthSpec, heightSpec);
-        int measuredWidth = viewHolder.getMeasureWidth();
-        int measuredHeight = viewHolder.getMeasureHeight();
+
+        int measuredWidth;
+        int measuredHeight;
+        if (viewHolder.isMeasureFailed()) {
+            // 测量失败时使用上次成功的测量值，或使用默认值
+            measuredWidth = viewHolder.mLastMeasuredWidth > 0 ? viewHolder.mLastMeasuredWidth : 100;
+            measuredHeight = viewHolder.mLastMeasuredHeight > 0 ? viewHolder.mLastMeasuredHeight : 50;
+        } else {
+            measuredWidth = viewHolder.getMeasureWidth();
+            measuredHeight = viewHolder.getMeasureHeight();
+        }
         // 只有在测量结果有效时才调用 layout
         if (measuredWidth > 0 && measuredHeight > 0) {
             viewHolder.layout(0, 0, measuredWidth, measuredHeight);
